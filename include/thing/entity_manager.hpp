@@ -1,20 +1,19 @@
 #pragma once
 
-#include <ecosnail/thing/entity.hpp>
-#include <ecosnail/thing/entity_pool.hpp>
-
-#include <ecosnail/tail.hpp>
+#include <thing/entity.hpp>
+#include <thing/entity_pool.hpp>
 
 #include <any>
 #include <cassert>
 #include <map>
 #include <memory>
 #include <optional>
+#include <ranges>
 #include <type_traits>
 #include <typeindex>
 #include <vector>
 
-namespace ecosnail::thing {
+namespace thing {
 
 class EntityManager {
 public:
@@ -49,12 +48,13 @@ public:
 
         auto it = _components.find(typeid(Component));
         if (it == _components.end()) {
-            return tail::valueRange<const ComponentMap>();
+            static const auto empty = std::map<Entity, Component>{};
+            return std::views::values(empty);
         }
 
         const auto& componentMap =
             std::any_cast<const ComponentMap&>(it->second);
-        return tail::valueRange(componentMap);
+        return std::views::values(componentMap);
     }
 
     template <class Component>
@@ -64,11 +64,12 @@ public:
 
         auto it = _components.find(typeid(Component));
         if (it == _components.end()) {
-            return tail::valueRange<MapRef>();
+            static auto empty = std::map<Entity, Component>{};
+            return std::views::values(empty);
         }
 
         auto& componentMap = std::any_cast<MapRef>(it->second);
-        return tail::valueRange(componentMap);
+        return std::views::values(componentMap);
     }
 
     template <class Component>
@@ -78,12 +79,13 @@ public:
 
         auto it = _components.find(typeid(Component));
         if (it == _components.end()) {
-            return tail::keyRange<MapRef>();
+            static const auto empty = std::map<Entity, Component>{};
+            return std::views::keys(empty);
         }
 
         const auto& componentMap =
             std::any_cast<const std::map<Entity, Component>&>(it->second);
-        return tail::keyRange(componentMap);
+        return std::views::keys(componentMap);
     }
 
     template <class Component>
@@ -127,4 +129,4 @@ private:
     std::map<std::type_index, std::any> _components;
 };
 
-} // namespace ecosnail::thing
+} // namespace thing

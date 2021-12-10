@@ -1,9 +1,9 @@
-#include <ecosnail/thing/entity_pool.hpp>
+#include <thing/entity_pool.hpp>
 
 #include <cassert>
 #include <algorithm>
 
-namespace ecosnail::thing {
+namespace thing {
 
 Entity EntityPool::createEntity()
 {
@@ -28,4 +28,4 @@ void EntityPool::killEntity(Entity entity)
     _freeEntities.push_back(entity);
 }
 
-} // namespace ecosnail::thing
+} // namespace thing

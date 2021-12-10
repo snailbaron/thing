@@ -1,9 +1,12 @@
-ecosnail_project (
-    SOURCES
-        entity_pool.cpp
+cmake_minimum_required(VERSION 3.12)
 
-    DEPENDS
-        tail
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED TRUE)
 
-    TESTS
+add_library(thing
+    entity_pool.cpp
 )
+target_include_directories(thing PUBLIC include)
+target_link_libraries(thing)
+
+add_subdirectory(tests)

@@ -2,7 +2,7 @@
 
 #include <cstdint>
 
-namespace ecosnail::thing {
+namespace thing {
 
 class Entity {
 public:
@@ -46,4 +46,4 @@ private:
     ValueType _id;
 };
 
-} // namespace ecosnail::thing
+} // namespace thing

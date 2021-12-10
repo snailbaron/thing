@@ -1,10 +1,10 @@
 #pragma once
 
-#include <ecosnail/thing/entity.hpp>
+#include <thing/entity.hpp>
 
 #include <deque>
 
-namespace ecosnail::thing {
+namespace thing {
 
 class EntityPool {
 public:
@@ -16,4 +16,4 @@ private:
     Entity::ValueType _nextEntity = 0;
 };
 
-} // namespace ecosnail::thing
+} // namespace thing

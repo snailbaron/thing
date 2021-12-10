@@ -1,11 +1,9 @@
 #define CATCH_CONFIG_MAIN
 #include <catch2/catch.hpp>
 
-#include <ecosnail/thing.hpp>
+#include <thing.hpp>
 
 #include <string>
-
-using ecosnail::thing::EntityManager;
 
 struct C1 {
     int id;
@@ -18,7 +16,7 @@ struct C2 {
 TEST_CASE("Simple", "[simple]")
 {
     // TODO: test const manager for read-only access
-    EntityManager manager;
+    thing::EntityManager manager;
 
     auto e1 = manager.createEntity();
     auto e2 = manager.createEntity();
@@ -55,7 +53,7 @@ TEST_CASE("Simple", "[simple]")
 
 TEST_CASE("Entity creation", "[entities]")
 {
-    EntityManager manager;
+    thing::EntityManager manager;
 
     auto e0 = manager.createEntity();
     auto e1 = manager.createEntity();
@@ -70,7 +68,7 @@ TEST_CASE("Entity creation", "[entities]")
 
 TEST_CASE("Modify component", "[component]")
 {
-    EntityManager manager;
+    thing::EntityManager manager;
 
     auto entity = manager.createEntity();
     auto& component = manager.add<int>(entity);
@@ -94,7 +92,7 @@ TEST_CASE("Modify component", "[component]")
 
 TEST_CASE("Get component pack", "[component]")
 {
-    EntityManager manager;
+    thing::EntityManager manager;
 
     auto e1 = manager.createEntity();
     auto e2 = manager.createEntity();
@@ -105,7 +103,7 @@ TEST_CASE("Get component pack", "[component]")
     manager.add<std::string>(e2) = "a";
     manager.add<std::string>(e3) = "b";
 
-    auto sum = [] (const EntityManager& manager) {
+    auto sum = [] (const thing::EntityManager& manager) {
         int sum = 0;
         for (const auto& i : manager.components<int>()) {
             sum += i;
@@ -115,7 +113,7 @@ TEST_CASE("Get component pack", "[component]")
 
     REQUIRE(sum(manager) == 3);
 
-    auto concat = [] (const EntityManager& manager) {
+    auto concat = [] (const thing::EntityManager& manager) {
         std::string concat;
         for (const auto& s : manager.components<std::string>()) {
             concat += s;
@@ -128,7 +126,7 @@ TEST_CASE("Get component pack", "[component]")
 
 TEST_CASE("No components", "[component]")
 {
-    const EntityManager manager;
+    const thing::EntityManager manager;
 
     int sum = 0;
     for (int value : manager.components<int>()) {
