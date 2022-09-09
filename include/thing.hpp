@@ -238,9 +238,9 @@ public:
     template <class Component>
     Component& add(Entity entity, Component&& component)
     {
-        _components.create<Component>().add(entity, std::move(component));
         _entityComponentTypeIndex[entity].insert(
             std::type_index{typeid(Component)});
+        return _components.create<Component>().add(entity, std::move(component));
     }
 
     Entity createEntity()
