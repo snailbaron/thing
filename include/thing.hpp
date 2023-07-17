@@ -19,7 +19,7 @@ class Entity {
 public:
     using ValueType = uint64_t;
 
-    explicit Entity(ValueType id) : _id(id) {}
+    explicit Entity(ValueType id = 0) : _id(id) {}
     operator ValueType() const { return _id; }
 
     friend auto operator<=>(Entity lhs, Entity rhs)
