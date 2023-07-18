@@ -1,14 +1,14 @@
 #pragma once
 
-#include <any>
-#include <compare>
 #include <concepts>
 #include <cstdint>
 #include <deque>
 #include <iterator>
 #include <map>
+#include <memory>
 #include <set>
 #include <span>
+#include <type_traits>
 #include <typeindex>
 #include <utility>
 #include <vector>
@@ -41,9 +41,9 @@ public:
             auto result = _freeEntities.front();
             _freeEntities.pop_front();
             return result;
-        } else {
-            return Entity{_nextEntity++};
         }
+
+        return Entity{_nextEntity++};
     }
 
     void killEntity(Entity entity)
@@ -56,14 +56,14 @@ private:
     Entity::ValueType _nextEntity = 0;
 };
 
-class AbstractComponents {
+class UnknownTypeComponents {
 public:
-    virtual ~AbstractComponents() {}
+    virtual ~UnknownTypeComponents() = default;
     virtual void killEntity(Entity entity) = 0;
 };
 
 template <class Component>
-class OneTypeComponents final : public AbstractComponents {
+class OneTypeComponents final : public UnknownTypeComponents {
 public:
     const Component& component(Entity entity) const
     {
@@ -98,9 +98,9 @@ public:
             _components.emplace_back();
             _entities.push_back(entity);
             return _components.back();
-        } else {
-            return _components.at(iterator->second);
         }
+
+        return _components.at(iterator->second);
     }
 
     Component& add(Entity entity, Component&& component)
@@ -108,27 +108,27 @@ public:
         auto [iterator, inserted] =
             _entityIndex.insert({entity, _components.size()});
         if (inserted) {
-            _components.push_back(std::move(component));
+            _components.push_back(std::forward<Component>(component));
             _entities.push_back(entity);
             return _components.back();
-        } else {
-            Component& ref = _components.at(iterator->second);
-            ref = std::move(component);
-            return ref;
         }
+
+        return _components.at(iterator->second);
     }
 
     void killEntity(Entity entity) override
     {
-        if (auto it = _entityIndex.find(entity); it != _entityIndex.end()) {
-            size_t index = it->second;
-            Entity lastEntity = _entities.back();
-            _entities.at(index) = lastEntity;
-            _components.at(index) = std::move(_components.back());
-            _entityIndex.at(lastEntity) = index;
-            _entities.erase(std::prev(_entities.end()));
-            _components.erase(std::prev(_components.end()));
+        size_t index = _entityIndex.at(entity);
+        size_t size = _components.size();
+
+        if (index + 1 < size) {
+            std::swap(_components.at(index), _components.back());
+            std::swap(_entities.at(index), _entities.back());
+            _entityIndex.at(_entities.at(index)) = index;
         }
+        _components.resize(size - 1);
+        _entities.resize(size - 1);
+        _entityIndex.erase(entity);
     }
 
 private:
@@ -148,27 +148,25 @@ public:
     template <class Component>
     const OneTypeComponents<Component>& at() const
     {
-        return std::any_cast<const OneTypeComponents<Component>&>(
-            _components.at(std::type_index{typeid(Component)}));
+        return static_cast<const OneTypeComponents<Component>&>(
+            *_components.at(std::type_index{typeid(Component)}));
     }
 
     template <class Component>
     OneTypeComponents<Component>& at()
     {
-        return std::any_cast<OneTypeComponents<Component>&>(
-            _components.at(std::type_index{typeid(Component)}));
+        return static_cast<OneTypeComponents<Component>&>(
+            *_components.at(std::type_index{typeid(Component)}));
     }
 
-    const AbstractComponents& at(const std::type_index typeIndex) const
+    const UnknownTypeComponents& at(const std::type_index typeIndex) const
     {
-        return std::any_cast<const AbstractComponents&>(
-            _components.at(typeIndex));
+        return *_components.at(typeIndex);
     }
 
-    AbstractComponents& at(const std::type_index typeIndex)
+    UnknownTypeComponents& at(const std::type_index typeIndex)
     {
-        return std::any_cast<AbstractComponents&>(
-            _components.at(typeIndex));
+        return *_components.at(typeIndex);
     }
 
     template <class Component>
@@ -176,12 +174,15 @@ public:
     {
         auto [iterator, inserted] = _components.insert({
             std::type_index{typeid(Component)},
-            std::make_any<OneTypeComponents<Component>>()});
-        return std::any_cast<OneTypeComponents<Component>&>(iterator->second);
+            std::make_unique<OneTypeComponents<Component>>()});
+        return *static_cast<OneTypeComponents<Component>*>(
+            iterator->second.get());
     }
 
 private:
-    std::map<std::type_index, std::any> _components;
+    std::map<
+        std::type_index,
+        std::unique_ptr<UnknownTypeComponents>> _components;
 };
 
 } // namespace internals
@@ -240,7 +241,8 @@ public:
     {
         _entityComponentTypeIndex[entity].insert(
             std::type_index{typeid(Component)});
-        return _components.create<Component>().add(entity, std::move(component));
+        return _components.create<Component>().add(
+            entity, std::forward<Component>(component));
     }
 
     Entity createEntity()
